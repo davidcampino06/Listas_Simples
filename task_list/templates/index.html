@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Task List - Linked List</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="container">
+        <h1>My Task List</h1>
+        <p class="subtitle">Data structure: Singly Linked List</p>
+
+        <div class="add-box">
+            <input type="text" id="taskInput" placeholder="Write a new task...">
+            <button onclick="addTask()">Add task</button>
+        </div>
+
+        <ul id="taskList"></ul>
+    </div>
+
+    <script>
+        // Load tasks when the page opens
+        window.onload = loadTasks;
+
+        function loadTasks() {
+            fetch("/tasks")
+                .then(response => response.json())
+                .then(tasks => renderTasks(tasks));
+        }
+
+        function renderTasks(tasks) {
+            const list = document.getElementById("taskList");
+            list.innerHTML = "";
+
+            tasks.forEach(t => {
+                const item = document.createElement("li");
+                item.className = t.done ? "task done" : "task pending";
+
+                item.innerHTML = `
+                    <span class="task-text">${t.task}</span>
+                    <span class="status">${t.done ? "Completed" : "Pending"}</span>
+                    <div class="buttons">
+                        <button onclick="completeTask(${t.index})">Complete</button>
+                        <button onclick="deleteTask(${t.index})">Delete</button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function addTask() {
+            const input = document.getElementById("taskInput");
+            const task = input.value;
+
+            fetch("/add", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ task: task })
+            })
+            .then(response => response.json())
+            .then(tasks => {
+                renderTasks(tasks);
+                input.value = "";
+            });
+        }
+
+        function deleteTask(index) {
+            fetch("/delete/" + index, { method: "POST" })
+                .then(response => response.json())
+                .then(tasks => renderTasks(tasks));
+        }
+
+        function completeTask(index) {
+            fetch("/complete/" + index, { method: "POST" })
+                .then(response => response.json())
+                .then(tasks => renderTasks(tasks));
+        }
+    </script>
+
+</body>
+</html>
